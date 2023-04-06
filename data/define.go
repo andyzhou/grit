@@ -9,3 +9,7 @@ const (
 	dataKindOfDoc = iota
 	dataKindOfCounter
 )
+
+const (
+	CountDefaultField = "base"
+)

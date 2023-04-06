@@ -8,3 +8,7 @@ package data
 type BaseData struct {
 	Kind int
 }
+
+type CountData struct {
+	Fields map[string]int64 `json:"fields"`
+}

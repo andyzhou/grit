@@ -67,5 +67,8 @@ func (f *DB) OpenDB() error {
 
 	//set base db
 	f.SetDB(db)
+
+	//start count process
+	f.startCountProcess()
 	return nil
 }
