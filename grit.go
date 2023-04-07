@@ -1,7 +1,7 @@
-package main
+package grit
 
 import (
-	"grit/face"
+	"github.com/andyzhou/grit/face"
 	"sync"
 )
 

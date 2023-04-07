@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"grit/define"
+	"github.com/andyzhou/grit/define"
 )
 
 /*

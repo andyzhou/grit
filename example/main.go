@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/andyzhou/grit"
-	"grit/face"
+	"github.com/andyzhou/grit/face"
 	"os"
 	"sync"
 )

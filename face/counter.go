@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"grit/data"
+	"github.com/andyzhou/grit/data"
 	"strconv"
 	"sync"
 )
