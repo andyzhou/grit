@@ -168,8 +168,5 @@ func (f *Counter) counterInit() {
 	}
 	//setup
 	f.locker = sync.RWMutex{}
-
-	//spawn process
-	//go f.runUpdateProcess()
 	f.hasInit = true
 }
