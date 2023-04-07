@@ -8,6 +8,8 @@ import (
 )
 
 /*
+ * Copyright (c) 2023, AndyChow <diudiu8848@gmail.com>
+ * All rights reserved.
  * doc data face
  * - work on `DB` face
  * - multi read and write

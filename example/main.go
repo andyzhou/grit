@@ -8,6 +8,12 @@ import (
 	"sync"
 )
 
+/*
+ * Copyright (c) 2023, AndyChow <diudiu8848@gmail.com>
+ * All rights reserved.
+ * example code
+ */
+
 //test doc
 func testDoc(db *face.DB, wg *sync.WaitGroup) {
 	var (
@@ -71,13 +77,15 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	//defer close db
 	defer db.CloseDB()
 
 	fmt.Println("start..")
 	wg.Add(1)
 
 	//test
-	//go testDoc(db, &wg)
+	go testDoc(db, &wg)
 	go testCounter(db, &wg)
 
 	//get dbs

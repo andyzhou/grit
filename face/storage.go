@@ -6,6 +6,8 @@ import (
 )
 
 /*
+ * Copyright (c) 2023, AndyChow <diudiu8848@gmail.com>
+ * All rights reserved.
  * data storage face
  * - base one leveldb
  */
