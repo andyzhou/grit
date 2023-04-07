@@ -1,7 +1,7 @@
-package grit
+package main
 
 import (
-	"github.com/andyzhou/grit/face"
+	"grit/face"
 	"sync"
 )
 
@@ -34,6 +34,11 @@ func NewGrit() *Grit {
 		storage: face.NewStorage(),
 	}
 	return this
+}
+
+//get dbs
+func (f *Grit) GetDBs() []string {
+	return f.storage.GetDBs()
 }
 
 //close db

@@ -29,20 +29,14 @@ func NewDB(tag string) *DB {
 
 //close db
 func (f *DB) CloseDB() error {
+	var (
+		err error
+	)
 	if f.db != nil {
-		err := f.db.Close()
-		return err
+		err = f.db.Close()
 	}
-	return nil
+	return err
 }
-
-////get db
-//func (f *DB) GetDB() (*leveldb.DB, error) {
-//	if f.db == nil {
-//		return nil, errors.New("db not opened")
-//	}
-//	return f.db, nil
-//}
 
 //open db
 func (f *DB) OpenDB() error {
@@ -52,8 +46,8 @@ func (f *DB) OpenDB() error {
 	}
 
 	//check dir
-	fileDBPath := fmt.Sprintf("%v/%v", f.GetRootPath(), f.tag)
-	err := f.CheckDir(fileDBPath)
+	fileDBPath := fmt.Sprintf("%v/%v", f.getRootPath(), f.tag)
+	err := f.checkDir(fileDBPath)
 	if err != nil {
 		return err
 	}
@@ -66,9 +60,11 @@ func (f *DB) OpenDB() error {
 	f.db = db
 
 	//set base db
-	f.SetDB(db)
+	f.setDB(db)
+	f.Doc.setDB(db)
+	f.Counter.setDB(db)
 
-	//start count process
-	f.startCountProcess()
+	//counter init
+	f.counterInit()
 	return nil
 }

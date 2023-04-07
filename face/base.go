@@ -8,15 +8,16 @@ import (
 
 /*
  * base face
+ * - all property and func should be private
  */
 
 type Base struct {
-	RootPath string
+	rootPath string
 	db *leveldb.DB //reference
 }
 
 //del data
-func (f *Base) Remove(key []byte) error {
+func (f *Base) remove(key []byte) error {
 	//check
 	if key == nil {
 		return errors.New("invalid parameter")
@@ -30,7 +31,7 @@ func (f *Base) Remove(key []byte) error {
 }
 
 //read data
-func (f *Base) Read(key []byte) ([]byte, error) {
+func (f *Base) read(key []byte) ([]byte, error) {
 	//check
 	if key == nil {
 		return nil, errors.New("invalid parameter")
@@ -44,7 +45,7 @@ func (f *Base) Read(key []byte) ([]byte, error) {
 }
 
 //save data
-func (f *Base) Save(key, data []byte) error {
+func (f *Base) save(key, data []byte) error {
 	//check
 	if key == nil || data == nil {
 		return errors.New("invalid parameter")
@@ -58,22 +59,22 @@ func (f *Base) Save(key, data []byte) error {
 }
 
 //set db
-func (f *Base) SetDB(db *leveldb.DB) {
+func (f *Base) setDB(db *leveldb.DB) {
 	f.db = db
 }
 
 //get root path
-func (f *Base) GetRootPath() string {
-	return f.RootPath
+func (f *Base) getRootPath() string {
+	return f.rootPath
 }
 
 //set root path
-func (f *Base) SetRootPath(path string) {
-	f.RootPath = path
+func (f *Base) setRootPath(path string) {
+	f.rootPath = path
 }
 
 //check root dir
-func (f *Base) CheckDir(dir string) error {
+func (f *Base) checkDir(dir string) error {
 	//check
 	if dir == "" {
 		return errors.New("invalid dir param")

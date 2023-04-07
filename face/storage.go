@@ -32,6 +32,19 @@ func NewStorage() *Storage {
 	return this
 }
 
+//get dbs
+func (f *Storage) GetDBs() []string {
+	result := make([]string, 0)
+	sf := func(k, v interface{}) bool {
+		if tag, ok := k.(string); ok {
+			result = append(result, tag)
+		}
+		return true
+	}
+	f.dbMap.Range(sf)
+	return result
+}
+
 //close db
 func (f *Storage) CloseDB(tag string) error {
 	//check
@@ -71,7 +84,7 @@ func (f *Storage) OpenDB(tag string) (*DB, error) {
 
 	//try open db
 	db = NewDB(tag)
-	db.SetRootPath(f.RootPath)
+	db.setRootPath(f.rootPath)
 	err := db.OpenDB()
 	if err != nil {
 		return nil, err
@@ -88,7 +101,7 @@ func (f *Storage) SetDBPath(path string) error {
 		return errors.New("invalid parameter")
 	}
 	f.rootPath = path
-	f.SetRootPath(path)
+	f.setRootPath(path)
 	return nil
 }
 

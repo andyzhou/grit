@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"grit/define"
 )
 
 /*
  * doc data face
  * - work on `DB` face
+ * - multi read and write
  */
 
 //face info
@@ -37,7 +39,7 @@ func (f *Doc) Del(key string) error {
 	if key == "" {
 		return errors.New("invalid parameter")
 	}
-	err := f.Remove([]byte(key))
+	err := f.remove([]byte(key))
 	return err
 }
 
@@ -61,7 +63,11 @@ func (f *Doc) Get(key string) ([]byte, error) {
 	if key == "" {
 		return nil, errors.New("invalid parameter")
 	}
-	data, err := f.Read([]byte(key))
+	data, err := f.read([]byte(key))
+	if err != nil &&
+       err.Error() == define.ErrOfNotFound {
+		return nil, nil
+	}
 	return data, err
 }
 
@@ -79,7 +85,7 @@ func (f *Doc) Set(key string, value interface{}) error {
 	}else{
 		bf.WriteString(fmt.Sprintf("%v", value))
 	}
-	err := f.Save([]byte(key), bf.Bytes())
+	err := f.save([]byte(key), bf.Bytes())
 	return err
 }
 
