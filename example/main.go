@@ -82,7 +82,7 @@ func main() {
 	defer db.CloseDB()
 
 	fmt.Println("start..")
-	wg.Add(1)
+	wg.Add(2)
 
 	//test
 	go testDoc(db, &wg)
