@@ -2,6 +2,7 @@ package face
 
 import (
 	"errors"
+	"github.com/andyzhou/grit/define"
 	"sync"
 )
 
@@ -11,11 +12,6 @@ import (
  * data storage face
  * - base one leveldb
  */
-
-//inter macro define
-const (
-	DefaultRootPath = "./"
-)
 
 //face info
 type Storage struct {
@@ -28,7 +24,7 @@ type Storage struct {
 func NewStorage() *Storage {
 	//self init
 	this := &Storage{
-		rootPath: DefaultRootPath,
+		rootPath: define.DefaultDBRootPath,
 		dbMap: sync.Map{},
 	}
 	return this
