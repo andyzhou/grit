@@ -319,6 +319,7 @@ func (f *Counter) runWorker() {
 		case req, isOk = <- f.reqChan:
 			if isOk && &req != nil {
 				//update one counter
+				f.updateOneCounter(&req)
 			}
 		case <- f.closeChan:
 			return

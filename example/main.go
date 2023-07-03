@@ -6,6 +6,7 @@ import (
 	"github.com/andyzhou/grit/face"
 	"os"
 	"sync"
+	"time"
 )
 
 /*
@@ -15,7 +16,7 @@ import (
  */
 
 //test doc
-func testDoc(db *face.DB, wg *sync.WaitGroup) {
+func testDoc(db *face.DB) {
 	var (
 		key = "t1"
 		val = "hello"
@@ -33,12 +34,10 @@ func testDoc(db *face.DB, wg *sync.WaitGroup) {
 	//check key is exists
 	bRet, err := db.Exists(key)
 	fmt.Println("bRet:", bRet, ", err:", err)
-
-	wg.Done()
 }
 
 //test counter
-func testCounter(db *face.DB, wg *sync.WaitGroup) {
+func testCounter(db *face.DB) {
 	var (
 		key = "c1"
 		hashKey = "hc1"
@@ -56,12 +55,18 @@ func testCounter(db *face.DB, wg *sync.WaitGroup) {
 	err := db.HashIncBy(hashKey, map[string]int64{
 		"up":2,
 		"down":1,
-	})
+	}, true)
 	fmt.Println("hash inc by, err:", err)
 
 	recMap, err := db.GetHashCount(hashKey)
 	fmt.Println("hash count:", recMap, ", err:", err)
-	wg.Done()
+}
+
+//force done
+func forceDone(num int, wg *sync.WaitGroup)  {
+ for i := 0; i < num; i++ {
+	 wg.Done()
+ }
 }
 
 func main() {
@@ -85,12 +90,18 @@ func main() {
 	wg.Add(2)
 
 	//test
-	go testDoc(db, &wg)
-	go testCounter(db, &wg)
+	go testDoc(db)
+	go testCounter(db)
 
 	//get dbs
 	dbs := g.GetDBs()
 	fmt.Println("dbs:",  dbs)
+
+	//force end
+	sf := func() {
+		forceDone(2, &wg)
+	}
+	time.AfterFunc(time.Second * 2, sf)
 
 	wg.Wait()
 	fmt.Println("done!")
