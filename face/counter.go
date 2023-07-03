@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/andyzhou/grit/data"
+	"github.com/andyzhou/grit/define"
+	"log"
 	"strconv"
 	"sync"
 )
@@ -14,18 +16,32 @@ import (
  * All rights reserved.
  * counter data face
  * - work on `DB` face
+ * - support update on queue
  */
+
+//inter type
+type (
+	countReq struct {
+		key string
+		incVal int64 //second priority
+		hashVal map[string]int64 //first priority
+	}
+)
 
 //face info
 type Counter struct {
+	queueSize int
 	hasInit bool
+	queueRun bool
 	locker sync.RWMutex
+	reqChan chan countReq
+	closeChan chan struct{}
 	Base
 }
 
-//get
+//get hash count value
 func (f *Counter) GetHashCount(
-			key string) (map[string]int64, error) {
+		key string) (map[string]int64, error) {
 	//check
 	if key == "" {
 		return nil, errors.New("invalid parameter")
@@ -47,14 +63,125 @@ func (f *Counter) GetHashCount(
 	return cd.Fields, nil
 }
 
+//get gen count value
+func (f *Counter) GetCount(
+		key string) (int64, error) {
+	//check
+	if key == "" {
+		return 0, errors.New("invalid parameter")
+	}
+
+	//get from db
+	dataByte, err := f.read([]byte(key))
+	if err != nil {
+		return 0, err
+	}
+	//decode
+	v, err := strconv.ParseInt(string(dataByte), 10, 64)
+	return v, err
+}
+
 //inc by one key multi fields count
 func (f *Counter) HashIncBy(
-			key string,
-			im map[string]int64,
-			borderChecks ...bool) error {
+		key string,
+		im map[string]int64,
+		useQueues ...bool) error {
+	var (
+		useQueue bool
+		err error
+	)
+	//check
+	if key == "" || im == nil {
+		return errors.New("invalid parameter")
+	}
+	if useQueues != nil && len(useQueues) > 0 {
+		useQueue = useQueues[0]
+	}
+	if useQueue {
+		//run in queue
+		err = f.sendToQueue(key, 0, im)
+		return err
+	}
+
+	//call directly
+	err = f.interHashIncBy(key, im)
+	return err
+}
+
+//inc by for one key one count
+//if use queue mod, new value will be 0
+//return new value, error
+func (f *Counter) IncBy(
+		key string,
+		val int64,
+		useQueues ...bool) (int64, error) {
+	var (
+		useQueue bool
+		newVal int64
+		err error
+	)
+	//check
+	if key == "" || val == 0 {
+		return 0, errors.New("invalid parameter")
+	}
+	if useQueues != nil && len(useQueues) > 0 {
+		useQueue = useQueues[0]
+	}
+	if useQueue {
+		//run in queue
+		err = f.sendToQueue(key, val, nil)
+		return 0, err
+	}
+	//call directly
+	newVal, err = f.interIncBy(key, val)
+	return newVal, err
+}
+
+//set inter queue size
+func (f *Counter) SetQueueSize(size int) {
+	if size <= 0 {
+		return
+	}
+	f.queueSize = size
+}
+
+//////////////
+//private func
+//////////////
+
+//send to queue
+func (f *Counter) sendToQueue(
+		key string,
+		val int64,
+		hv map[string]int64) error {
+	//check
+	if key == "" || (val == 0 && (hv == nil || len(hv) <= 0)) {
+		return errors.New("invalid parameter")
+	}
+	//check or init queue
+	f.checkAndInitQueue()
+	if !f.queueRun || f.reqChan == nil {
+		return errors.New("inter queue hadn't run")
+	}
+	//init request
+	req := countReq{
+		key: key,
+		incVal: val,
+		hashVal: hv,
+	}
+	//send to chan async
+	select {
+	case f.reqChan <- req:
+	}
+	return nil
+}
+
+//inter hash count inc
+func (f *Counter) interHashIncBy(
+		key string,
+		im map[string]int64) error {
 	var (
 		cd data.CountData
-		borderCheck bool
 	)
 	//check
 	if key == "" || im == nil {
@@ -85,9 +212,6 @@ func (f *Counter) HashIncBy(
 	}
 
 	//border value check
-	if borderChecks != nil && len(borderChecks) > 0 {
-		borderCheck = borderChecks[0]
-	}
 	//check and update
 	for field, count := range im {
 		v, ok := cd.Fields[field]
@@ -97,7 +221,7 @@ func (f *Counter) HashIncBy(
 			v = count
 		}
 		//border check
-		if borderCheck && v <= 0 {
+		if v <= 0 {
 			v = 0
 		}
 		cd.Fields[field] = v
@@ -112,12 +236,11 @@ func (f *Counter) HashIncBy(
 	return err
 }
 
-//inc by for one key one count
+//inter inc by for one key one count
 //return new value, error
-func (f *Counter) IncBy(
-			key string,
-			val int64,
-			borderChecks ...bool) (int64, error) {
+func (f *Counter) interIncBy(
+		key string,
+		val int64) (int64, error) {
 	var (
 		countVal int64
 	)
@@ -142,10 +265,8 @@ func (f *Counter) IncBy(
 	}
 
 	//border value check
-	if borderChecks != nil && len(borderChecks) > 0 {
-		if borderChecks[0] && countVal < 0 {
-			countVal = 0
-		}
+	if countVal < 0 {
+		countVal = 0
 	}
 
 	//save
@@ -157,9 +278,69 @@ func (f *Counter) IncBy(
 	return countVal, nil
 }
 
-//////////////
-//private func
-//////////////
+//update one counter
+func (f *Counter) updateOneCounter(
+		req *countReq) error {
+	var (
+		err error
+	)
+	//check
+	if req == nil || req.key == "" {
+		return errors.New("invalid parameter")
+	}
+	if req.hashVal != nil && len(req.hashVal) > 0 {
+		//check hash count first
+		err = f.interHashIncBy(req.key, req.hashVal)
+	}else{
+		//gen inc count
+		_, err = f.interIncBy(req.key, req.incVal)
+	}
+	return err
+}
+
+//run inter worker
+func (f *Counter) runWorker() {
+	var (
+		m any = nil
+		req countReq
+		isOk bool
+	)
+	//defer
+	defer func() {
+		if err := recover(); err != m {
+			log.Printf("counter.runWorker panic, err:%v\n", err)
+		}
+		close(f.reqChan)
+	}()
+
+	//loop
+	for {
+		select {
+		case req, isOk = <- f.reqChan:
+			if isOk && &req != nil {
+				//update one counter
+			}
+		case <- f.closeChan:
+			return
+		}
+	}
+}
+
+//check and init queue
+func (f *Counter) checkAndInitQueue() {
+	if f.queueRun {
+		return
+	}
+	if f.queueSize <= 0 {
+		f.queueSize = define.CountQueueSize
+	}
+	//init inter worker
+	f.reqChan = make(chan countReq, f.queueSize)
+	f.closeChan = make(chan struct{}, 1)
+	//spawn son process
+	go f.runWorker()
+	f.queueRun = true
+}
 
 //inter init
 func (f *Counter) counterInit() {
