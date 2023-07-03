@@ -182,6 +182,7 @@ func (f *Counter) interHashIncBy(
 		im map[string]int64) error {
 	var (
 		cd data.CountData
+		needInc bool
 	)
 	//check
 	if key == "" || im == nil {
@@ -209,22 +210,25 @@ func (f *Counter) interHashIncBy(
 		if err != nil {
 			return err
 		}
+		needInc = true
 	}
 
 	//border value check
 	//check and update
-	for field, count := range im {
-		v, ok := cd.Fields[field]
-		if ok {
-			v += count
-		}else{
-			v = count
+	if needInc {
+		for field, count := range im {
+			v, ok := cd.Fields[field]
+			if ok {
+				v += count
+			}else{
+				v = count
+			}
+			//border check
+			if v <= 0 {
+				v = 0
+			}
+			cd.Fields[field] = v
 		}
-		//border check
-		if v <= 0 {
-			v = 0
-		}
-		cd.Fields[field] = v
 	}
 	//encode
 	dataByte, err := json.Marshal(cd)
