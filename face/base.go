@@ -21,7 +21,7 @@ type Base struct {
 //del data
 func (f *Base) remove(key []byte) error {
 	//check
-	if key == nil {
+	if key == nil || len(key) <= 0 {
 		return errors.New("invalid parameter")
 	}
 	if f.db == nil {
@@ -35,7 +35,7 @@ func (f *Base) remove(key []byte) error {
 //read data
 func (f *Base) read(key []byte) ([]byte, error) {
 	//check
-	if key == nil {
+	if key == nil || len(key) <= 0 {
 		return nil, errors.New("invalid parameter")
 	}
 	if f.db == nil {
@@ -49,7 +49,8 @@ func (f *Base) read(key []byte) ([]byte, error) {
 //save data
 func (f *Base) save(key, data []byte) error {
 	//check
-	if key == nil || data == nil {
+	if key == nil || len(key) <= 0 ||
+		data == nil || len(data) <= 0 {
 		return errors.New("invalid parameter")
 	}
 	if f.db == nil {

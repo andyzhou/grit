@@ -41,7 +41,8 @@ type Counter struct {
 
 //get hash count value
 func (f *Counter) GetHashCount(
-		key string) (map[string]int64, error) {
+			key string,
+		) (map[string]int64, error) {
 	//check
 	if key == "" {
 		return nil, errors.New("invalid parameter")
@@ -64,8 +65,7 @@ func (f *Counter) GetHashCount(
 }
 
 //get gen count value
-func (f *Counter) GetCount(
-		key string) (int64, error) {
+func (f *Counter) GetCount(key string) (int64, error) {
 	//check
 	if key == "" {
 		return 0, errors.New("invalid parameter")
@@ -158,11 +158,16 @@ func (f *Counter) sendToQueue(
 	if key == "" || (val == 0 && (hv == nil || len(hv) <= 0)) {
 		return errors.New("invalid parameter")
 	}
+
 	//check or init queue
 	f.checkAndInitQueue()
 	if !f.queueRun || f.reqChan == nil {
 		return errors.New("inter queue hadn't run")
 	}
+	if len(f.reqChan) >= f.queueSize {
+		return errors.New("request chan is full")
+	}
+
 	//init request
 	req := countReq{
 		key: key,
@@ -333,15 +338,18 @@ func (f *Counter) runWorker() {
 
 //check and init queue
 func (f *Counter) checkAndInitQueue() {
+	//check
 	if f.queueRun {
 		return
 	}
 	if f.queueSize <= 0 {
 		f.queueSize = define.CountQueueSize
 	}
+
 	//init inter worker
 	f.reqChan = make(chan countReq, f.queueSize)
 	f.closeChan = make(chan struct{}, 1)
+
 	//spawn son process
 	go f.runWorker()
 	f.queueRun = true
