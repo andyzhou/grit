@@ -48,6 +48,11 @@ func (f *Grit) CloseDB(tag string) error {
 	return f.storage.CloseDB(tag)
 }
 
+//get db
+func (f *Grit) GetDB(tag string) (*face.DB, error) {
+	return f.storage.GetDB(tag)
+}
+
 //open db
 func (f *Grit) OpenDB(tag string) (*face.DB, error) {
 	return f.storage.OpenDB(tag)

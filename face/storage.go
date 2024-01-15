@@ -67,6 +67,21 @@ func (f *Storage) CloseDB(tag string) error {
 	return nil
 }
 
+//get db
+func (f *Storage) GetDB(tag string) (*DB, error) {
+	//check
+	if tag == "" {
+		return nil, errors.New("invalid parameter")
+	}
+
+	//hit cache first
+	db := f.getDbByTag(tag)
+	if db == nil {
+		return nil, errors.New("no such db tag")
+	}
+	return db, nil
+}
+
 //open db
 func (f *Storage) OpenDB(tag string) (*DB, error) {
 	//check
@@ -116,8 +131,8 @@ func (f *Storage) getDbByTag(tag string) *DB {
 	if !ok || v == nil {
 		return nil
 	}
-	obj, ok := v.(*DB)
-	if !ok || obj == nil {
+	obj, subOk := v.(*DB)
+	if !subOk || obj == nil {
 		return nil
 	}
 	return obj
