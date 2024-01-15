@@ -46,6 +46,19 @@ func (f *Base) read(key []byte) ([]byte, error) {
 	return data, err
 }
 
+//check key is exists or not
+func (f *Base) isExists(key []byte) (bool, error) {
+	//check
+	if key == nil || len(key) <= 0 {
+		return false, errors.New("invalid parameter")
+	}
+	if f.db == nil {
+		return false, errors.New("db didn't init")
+	}
+	bRet, err := f.db.Has(key, nil)
+	return bRet, err
+}
+
 //save data
 func (f *Base) save(key, data []byte) error {
 	//check

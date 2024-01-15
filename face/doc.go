@@ -60,7 +60,6 @@ func (f *Doc) MGet(keys ...string) (map[string][]byte, error) {
 	}
 	return result, nil
 }
-
 func (f *Doc) Get(key string) ([]byte, error) {
 	if key == "" {
 		return nil, errors.New("invalid parameter")
@@ -96,6 +95,6 @@ func (f *Doc) Exists(key string) (bool, error) {
 	if key == "" {
 		return false, errors.New("invalid parameter")
 	}
-	bRet, err := f.db.Has([]byte(key), nil)
+	bRet, err := f.isExists([]byte(key))
 	return bRet, err
 }
