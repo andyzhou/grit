@@ -30,6 +30,18 @@ func NewStorage() *Storage {
 	return this
 }
 
+//quit
+func (f *Storage) Quit() {
+	sf := func(k, v interface{}) bool {
+		db, ok := v.(*DB)
+		if ok && db != nil {
+			db.CloseDB()
+		}
+		return true
+	}
+	f.dbMap.Range(sf)
+}
+
 //get dbs
 func (f *Storage) GetDBs() []string {
 	result := make([]string, 0)

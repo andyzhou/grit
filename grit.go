@@ -38,6 +38,11 @@ func NewGrit() *Grit {
 	return this
 }
 
+//quit
+func (f *Grit) Quit() {
+	f.storage.Quit()
+}
+
 //get dbs
 func (f *Grit) GetDBs() []string {
 	return f.storage.GetDBs()
