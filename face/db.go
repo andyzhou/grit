@@ -55,9 +55,9 @@ func (f *DB) OpenDB() error {
 	}
 
 	//init level db
-	db, err := leveldb.OpenFile(fileDBPath, nil)
-	if err != nil {
-		return err
+	db, subErr := leveldb.OpenFile(fileDBPath, nil)
+	if subErr != nil {
+		return subErr
 	}
 	f.db = db
 

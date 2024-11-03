@@ -36,7 +36,6 @@ func (f *Doc) MDel(keys ...string) error {
 	}
 	return err
 }
-
 func (f *Doc) Del(key string) error {
 	if key == "" {
 		return errors.New("invalid parameter")
@@ -92,9 +91,28 @@ func (f *Doc) Set(key string, value interface{}) error {
 
 //exists
 func (f *Doc) Exists(key string) (bool, error) {
+	//check
 	if key == "" {
 		return false, errors.New("invalid parameter")
 	}
+
+	//call base func
 	bRet, err := f.isExists([]byte(key))
 	return bRet, err
+}
+func (f *Doc) MExists(keys ...string) (map[interface{}]bool, error) {
+	//check
+	if keys == nil || len(keys) <= 0 {
+		return nil, errors.New("invalid parameter")
+	}
+
+	//convert keys
+	keyBytes := make([][]byte, 0)
+	for _, key := range keys {
+		keyBytes = append(keyBytes, []byte(key))
+	}
+
+	//call base func
+	bRetMap, err := f.mIsExists(keyBytes...)
+	return bRetMap, err
 }

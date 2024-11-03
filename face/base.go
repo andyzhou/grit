@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"os"
+	"sync"
 )
 
 /*
@@ -16,6 +17,7 @@ import (
 type Base struct {
 	rootPath string
 	db *leveldb.DB //reference
+	locker sync.RWMutex
 }
 
 //del data
@@ -27,7 +29,9 @@ func (f *Base) remove(key []byte) error {
 	if f.db == nil {
 		return errors.New("db didn't init")
 	}
-	//try delete data from db
+	//delete data from db with locker
+	f.locker.Lock()
+	defer f.locker.Unlock()
 	err := f.db.Delete(key, nil)
 	return err
 }
@@ -41,22 +45,51 @@ func (f *Base) read(key []byte) ([]byte, error) {
 	if f.db == nil {
 		return nil, errors.New("db didn't init")
 	}
-	//try get data from db
+
+	//get data from db with locker
+	f.locker.Lock()
+	defer f.locker.Unlock()
 	data, err := f.db.Get(key, nil)
 	return data, err
 }
 
-//check key is exists or not
+//check key are exists or not
 func (f *Base) isExists(key []byte) (bool, error) {
 	//check
-	if key == nil || len(key) <= 0 {
+	if key == nil {
 		return false, errors.New("invalid parameter")
 	}
 	if f.db == nil {
 		return false, errors.New("db didn't init")
 	}
+
+	//check from db with locker
+	f.locker.Lock()
+	defer f.locker.Unlock()
 	bRet, err := f.db.Has(key, nil)
 	return bRet, err
+}
+func (f *Base) mIsExists(keys ...[]byte) (map[interface{}]bool, error) {
+	var (
+		bRet bool
+	)
+	//check
+	if keys == nil || len(keys) <= 0 {
+		return nil, errors.New("invalid parameter")
+	}
+	if f.db == nil {
+		return nil, errors.New("db didn't init")
+	}
+
+	//check from db with locker
+	f.locker.Lock()
+	defer f.locker.Unlock()
+	result := make(map[interface{}]bool)
+	for _, key := range keys {
+		bRet, _ = f.db.Has(key, nil)
+		result[key] = bRet
+	}
+	return result, nil
 }
 
 //save data
@@ -69,7 +102,10 @@ func (f *Base) save(key, data []byte) error {
 	if f.db == nil {
 		return errors.New("db didn't init")
 	}
-	//try put data into db
+
+	//put data into db with locker
+	f.locker.Lock()
+	defer f.locker.Unlock()
 	err := f.db.Put(key, data, nil)
 	return err
 }
@@ -95,7 +131,7 @@ func (f *Base) checkDir(dir string) error {
 	if dir == "" {
 		return errors.New("invalid dir param")
 	}
-	//detect and try make dir
+	//detect and make dir
 	_, err := os.Stat(dir)
 	if err != nil {
 		//dir not exist

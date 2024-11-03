@@ -1,6 +1,28 @@
 package testing
 
-import "testing"
+import (
+	"github.com/andyzhou/grit/face"
+	"log"
+	"os"
+	"testing"
+)
+
+//global variable
+var (
+	db *face.DB
+	err error
+)
+
+//init
+func init()  {
+	//init db
+	db, err = InitDB()
+	if err != nil {
+		log.Printf("init db failed, err:%v\n", err.Error())
+		os.Exit(1)
+		return
+	}
+}
 
 //doc test
 func TestDoc(t *testing.T) {
@@ -39,28 +61,22 @@ func BenchmarkDoc(b *testing.B) {
 
 	//reset timer
 	b.ResetTimer()
-
-	//init db
-	db, err := InitDB()
-	if err != nil {
-		b.Logf("init db failed, err:%v\n", err.Error())
-		return
-	}
-
 	for n := 0; n < b.N; n++ {
 		//get or set key
 		rec, subErr := db.Get(key)
-		b.Logf("get key:%v, err:%v\n", key, subErr)
+		//b.Logf("get key:%v, err:%v\n", key, subErr)
 		if subErr != nil || rec == nil {
 			subErr = db.Set(key, val)
-			b.Logf("set key:%v, err:%v\n", key, subErr)
+			if subErr != nil {
+				b.Logf("set key:%v, err:%v\n", key, subErr)
+			}
 		}else{
-			b.Logf("get rec:%v\n", string(rec))
+			//b.Logf("get rec:%v\n", string(rec))
 		}
 	}
 
 	for n := 0; n < b.N; n++ {
-		bRet, _ := db.Exists(key)
-		b.Logf("exists bRet:%v\n", bRet)
+		db.Exists(key)
+		//b.Logf("exists bRet:%v\n", bRet)
 	}
 }

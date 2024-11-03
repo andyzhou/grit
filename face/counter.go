@@ -76,9 +76,10 @@ func (f *Counter) GetCount(key string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	//decode
-	v, err := strconv.ParseInt(string(dataByte), 10, 64)
-	return v, err
+	v, subErr := strconv.ParseInt(string(dataByte), 10, 64)
+	return v, subErr
 }
 
 //inc by one key multi fields count
@@ -112,9 +113,9 @@ func (f *Counter) HashIncBy(
 //if use queue mod, new value will be 0
 //return new value, error
 func (f *Counter) IncBy(
-		key string,
-		val int64,
-		useQueues ...bool) (int64, error) {
+	key string,
+	val int64,
+	useQueues ...bool) (int64, error) {
 	var (
 		useQueue bool
 		newVal int64
@@ -132,6 +133,7 @@ func (f *Counter) IncBy(
 		err = f.sendToQueue(key, val, nil)
 		return 0, err
 	}
+
 	//call directly
 	newVal, err = f.interIncBy(key, val)
 	return newVal, err
@@ -151,9 +153,9 @@ func (f *Counter) SetQueueSize(size int) {
 
 //send to queue
 func (f *Counter) sendToQueue(
-		key string,
-		val int64,
-		hv map[string]int64) error {
+	key string,
+	val int64,
+	hv map[string]int64) error {
 	//check
 	if key == "" || (val == 0 && (hv == nil || len(hv) <= 0)) {
 		return errors.New("invalid parameter")
@@ -183,8 +185,8 @@ func (f *Counter) sendToQueue(
 
 //inter hash count inc
 func (f *Counter) interHashIncBy(
-		key string,
-		im map[string]int64) error {
+	key string,
+	im map[string]int64) error {
 	var (
 		cd data.CountData
 		needInc bool
@@ -248,8 +250,8 @@ func (f *Counter) interHashIncBy(
 //inter inc by for one key one count
 //return new value, error
 func (f *Counter) interIncBy(
-		key string,
-		val int64) (int64, error) {
+	key string,
+	val int64) (int64, error) {
 	var (
 		countVal int64
 	)
@@ -289,7 +291,7 @@ func (f *Counter) interIncBy(
 
 //update one counter
 func (f *Counter) updateOneCounter(
-		req *countReq) error {
+	req *countReq) error {
 	var (
 		err error
 	)
