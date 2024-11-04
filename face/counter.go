@@ -41,8 +41,8 @@ type Counter struct {
 
 //get hash count value
 func (f *Counter) GetHashCount(
-			key string,
-		) (map[string]int64, error) {
+		key string,
+	) (map[string]int64, error) {
 	//check
 	if key == "" {
 		return nil, errors.New("invalid parameter")
@@ -65,7 +65,8 @@ func (f *Counter) GetHashCount(
 }
 
 //get gen count value
-func (f *Counter) GetCount(key string) (int64, error) {
+func (f *Counter) GetCount(
+	key string) (int64, error) {
 	//check
 	if key == "" {
 		return 0, errors.New("invalid parameter")
@@ -84,9 +85,9 @@ func (f *Counter) GetCount(key string) (int64, error) {
 
 //inc by one key multi fields count
 func (f *Counter) HashIncBy(
-		key string,
-		im map[string]int64,
-		useQueues ...bool) error {
+	key string,
+	im map[string]int64,
+	useQueues ...bool) error {
 	var (
 		useQueue bool
 		err error
