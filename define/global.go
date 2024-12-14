@@ -1,7 +1,7 @@
 package define
 
 const (
-	ErrOfNotFound = "leveldb: not found"
+	ErrOfNotFound     = "leveldb: not found"
 	DefaultDBRootPath = "./"
-	CountQueueSize = 1024
+	CountQueueSize    = 1024
 )

@@ -64,7 +64,7 @@ func BenchmarkDoc(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		//get or set key
 		rec, subErr := db.Get(key)
-		//b.Logf("get key:%v, err:%v\n", key, subErr)
+		//b.Logf("get key:%v, rec:%v, err:%v\n", key, rec, subErr)
 		if subErr != nil || rec == nil {
 			subErr = db.Set(key, val)
 			if subErr != nil {
@@ -75,8 +75,8 @@ func BenchmarkDoc(b *testing.B) {
 		}
 	}
 
-	for n := 0; n < b.N; n++ {
-		db.Exists(key)
-		//b.Logf("exists bRet:%v\n", bRet)
-	}
+	//for n := 0; n < b.N; n++ {
+	//	db.Exists(key)
+	//	//b.Logf("exists bRet:%v\n", bRet)
+	//}
 }

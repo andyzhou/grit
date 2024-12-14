@@ -15,7 +15,7 @@ import (
 //face info
 type DB struct {
 	tag string
-	db *leveldb.DB //db engine
+	db  *leveldb.DB //db engine
 	Doc
 	Counter
 	Base

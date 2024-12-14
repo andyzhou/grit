@@ -16,8 +16,8 @@ import (
 
 type Base struct {
 	rootPath string
-	db *leveldb.DB //reference
-	locker sync.RWMutex
+	db       *leveldb.DB //reference
+	locker   sync.RWMutex
 }
 
 //del data
@@ -29,6 +29,7 @@ func (f *Base) remove(key []byte) error {
 	if f.db == nil {
 		return errors.New("db didn't init")
 	}
+
 	//delete data from db with locker
 	f.locker.Lock()
 	defer f.locker.Unlock()
@@ -112,6 +113,8 @@ func (f *Base) save(key, data []byte) error {
 
 //set db
 func (f *Base) setDB(db *leveldb.DB) {
+	f.locker.Lock()
+	defer f.locker.Unlock()
 	f.db = db
 }
 
@@ -131,6 +134,7 @@ func (f *Base) checkDir(dir string) error {
 	if dir == "" {
 		return errors.New("invalid dir param")
 	}
+
 	//detect and make dir
 	_, err := os.Stat(dir)
 	if err != nil {

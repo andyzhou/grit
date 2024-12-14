@@ -31,10 +31,10 @@ type (
 //face info
 type Counter struct {
 	queueSize int
-	hasInit bool
-	queueRun bool
-	locker sync.RWMutex
-	reqChan chan countReq
+	hasInit   bool
+	queueRun  bool
+	locker    sync.RWMutex
+	reqChan   chan countReq
 	closeChan chan struct{}
 	Base
 }

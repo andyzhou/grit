@@ -16,7 +16,7 @@ import (
 //face info
 type Storage struct {
 	rootPath string
-	dbMap sync.Map //tag -> *DB
+	dbMap    sync.Map //tag -> *DB
 	Base
 }
 
