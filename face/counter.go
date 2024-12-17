@@ -12,8 +12,7 @@ import (
 )
 
 /*
- * Copyright (c) 2023, AndyChow <diudiu8848@gmail.com>
- * All rights reserved.
+ * @author Andy Chow <diudiu8848@163.com>
  * counter data face
  * - work on `DB` face
  * - support update on queue

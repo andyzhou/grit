@@ -6,7 +6,7 @@ import (
 )
 
 /*
- * Copyright (c) 2023, AndyChow <diudiu8848@gmail.com>
+ * @author Andy Chow <diudiu8848@163.com>
  * All rights reserved.
  * api face
  */
