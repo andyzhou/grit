@@ -3,6 +3,7 @@ package face
 import (
 	"errors"
 	"github.com/andyzhou/grit/define"
+	"runtime"
 	"sync"
 )
 
@@ -15,8 +16,9 @@ import (
 //face info
 type Storage struct {
 	rootPath string
-	dbMap    sync.Map //tag -> *DB
+	dbMap    map[string]*DB //tag -> *DB
 	Base
+	sync.RWMutex
 }
 
 //construct
@@ -24,33 +26,36 @@ func NewStorage() *Storage {
 	//self init
 	this := &Storage{
 		rootPath: define.DefaultDBRootPath,
-		dbMap: sync.Map{},
+		dbMap: map[string]*DB{},
 	}
 	return this
 }
 
 //quit
 func (f *Storage) Quit() {
-	sf := func(k, v interface{}) bool {
-		db, ok := v.(*DB)
-		if ok && db != nil {
-			db.CloseDB()
-		}
-		return true
+	//close all db
+	f.Lock()
+	defer f.Unlock()
+	for k, v := range f.dbMap {
+		v.CloseDB()
+		delete(f.dbMap, k)
 	}
-	f.dbMap.Range(sf)
+
+	//gc opt
+	runtime.GC()
 }
 
 //get dbs
 func (f *Storage) GetDBs() []string {
+	f.Lock()
+	defer f.Unlock()
 	result := make([]string, 0)
-	sf := func(k, v interface{}) bool {
-		if tag, ok := k.(string); ok {
-			result = append(result, tag)
+	for tag, _ := range f.dbMap {
+		if tag == "" {
+			continue
 		}
-		return true
+		result = append(result, tag)
 	}
-	f.dbMap.Range(sf)
 	return result
 }
 
@@ -62,7 +67,7 @@ func (f *Storage) CloseDB(tag string) error {
 	}
 
 	//hit cache first
-	db := f.getDbByTag(tag)
+	db, _ := f.getDbByTag(tag)
 	if db == nil {
 		return errors.New("no db obj by tag")
 	}
@@ -73,8 +78,15 @@ func (f *Storage) CloseDB(tag string) error {
 		return err
 	}
 
-	//remove from map
-	f.dbMap.Delete(tag)
+	//remove from map with locker
+	f.Lock()
+	defer f.Unlock()
+	delete(f.dbMap, tag)
+
+	//gc opt
+	if len(f.dbMap) <= 0 {
+		runtime.GC()
+	}
 	return nil
 }
 
@@ -86,7 +98,10 @@ func (f *Storage) GetDB(tag string) (*DB, error) {
 	}
 
 	//hit cache first
-	db := f.getDbByTag(tag)
+	db, err := f.getDbByTag(tag)
+	if err != nil {
+		return nil, err
+	}
 	if db == nil {
 		return nil, errors.New("no such db tag")
 	}
@@ -101,29 +116,34 @@ func (f *Storage) OpenDB(tag string) (*DB, error) {
 	}
 
 	//hit cache first
-	db := f.getDbByTag(tag)
-	if db != nil {
+	db, err := f.getDbByTag(tag)
+	if err != nil || db != nil {
 		return db, nil
 	}
 
 	//try open db
 	db = NewDB(tag)
 	db.setRootPath(f.rootPath)
-	err := db.OpenDB()
+	err = db.OpenDB()
 	if err != nil {
 		return nil, err
 	}
 
-	//sync into map
-	f.dbMap.Store(tag, db)
+	//sync into map with locker
+	f.Lock()
+	defer f.Unlock()
+	f.dbMap[tag] = db
 	return db, nil
 }
 
 //set db path
 func (f *Storage) SetDBPath(path string) error {
+	//check
 	if path == "" {
 		return errors.New("invalid parameter")
 	}
+
+	//set root path
 	f.rootPath = path
 	f.setRootPath(path)
 	return nil
@@ -134,17 +154,18 @@ func (f *Storage) SetDBPath(path string) error {
 //////////////
 
 //get db obj by tag
-func (f *Storage) getDbByTag(tag string) *DB {
+func (f *Storage) getDbByTag(tag string) (*DB, error){
+	//check
 	if tag == "" {
-		return nil
+		return nil, errors.New("invalid parameter")
 	}
-	v, ok := f.dbMap.Load(tag)
+
+	//get with locker
+	f.Lock()
+	defer f.Unlock()
+	v, ok := f.dbMap[tag]
 	if !ok || v == nil {
-		return nil
+		return nil, nil
 	}
-	obj, subOk := v.(*DB)
-	if !subOk || obj == nil {
-		return nil
-	}
-	return obj
+	return v, nil
 }

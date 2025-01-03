@@ -2,7 +2,7 @@
 this is a simple data storage library, base on level db
 
 ## feature
-- support simple doc get and save
+- support simple doc base access opt
 - support simple and hashed counter get and save
 
 ## how to use?

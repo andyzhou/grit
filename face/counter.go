@@ -21,8 +21,8 @@ import (
 //inter type
 type (
 	countReq struct {
-		key string
-		incVal int64 //second priority
+		key     string
+		incVal  int64            //second priority
 		hashVal map[string]int64 //first priority
 	}
 )
